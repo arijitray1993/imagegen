@@ -24,9 +24,9 @@ rnn:add(nn.ReLU())
 criterion = nn.AbsCriterion()
 
 -- load dataset
-
---csv=csvigo.load({path="../../vectors/abstract_v002_train2015_00000000000"..j..".csv", verbose=false, mode="raw"})
-csv=csvigo.load({path="trainvectors.csv", verbose=false, mode="raw"})
+for j=100,103 do
+csv=csvigo.load({path="../../vectors/abstract_v002_train2015_000000000"..j..".csv", verbose=false, mode="raw"})
+--csv=csvigo.load({path="trainvectors.csv", verbose=false, mode="raw"})
 csv_tensor=torch.Tensor(csv)
 sequence=torch.DoubleTensor(csv_tensor)
 
@@ -35,24 +35,26 @@ sequence=torch.DoubleTensor(csv_tensor)
 
 --sequence=torch.DoubleTensor(sequence)
 --for c=1,5 do
-input=sequence[{{1,1000},{}}]
-target=sequence[{{2,1001},{}}]
+input=sequence[{{1,((#sequence)[1] - 1)},{}}]
+--print(#input)
+target=sequence[{{2,(#sequence)[1]},{}}]
+--print(#target)
 --c=c+6
 lr = 1.5
 updateInterval = 1
 i = 1
 prev_err=0
 abs=999
-while (i<40000 and abs>0) do
+while (i<40000) do
    -- a batch of inputs
-   local output = rnn:forward(input)
-   -- incement indices
-   local err = criterion:forward(output, target)
-   print(err)
-   local gradOutput = criterion:backward(output, target)
-   -- the Recurrent layer is memorizing its gradOutputs (up to memSize)
-   rnn:backward(input, gradOutput)
-
+   for s=1,(#input)[1] do
+   	local output= rnn:forward(input[s])
+   	local err = criterion:forward(output, target[s])
+   	--print(err)
+   	local gradOutput = criterion:backward(output, target[s])
+   	-- the Recurrent layer is memorizing its gradOutputs (up to memSize)
+   	rnn:backward(input[s], gradOutput)
+   end
    i = i + 1
    -- note that updateInterval < rho
    if i % updateInterval == 0 then
@@ -63,11 +65,13 @@ while (i<40000 and abs>0) do
       rnn:updateParameters(lr)
       rnn:zeroGradParameters()
    end
-   abs=(err-prev_err)^2
-   prev_err=err
+   --abs=(err-prev_err)^2
+   --prev_err=err
 end
---print(prev_err)
---end
-print (rnn:forward(input))
-print (target)
-torch.save('rnn1',rnn)
+print(j)
+end
+print (target[{{1,2},{}}])
+for l=1,2 do
+print (rnn:forward(input[l]))
+end
+--torch.save('rnn1',rnn)
