@@ -64,6 +64,7 @@ while (i<40000) do
       rnn:backwardThroughTime()
       rnn:updateParameters(lr)
       rnn:zeroGradParameters()
+      rnn:forget()
    end
    --abs=(err-prev_err)^2
    --prev_err=err
